@@ -189,6 +189,151 @@ void Effects::_color_river() {
   }
 }
 
+void removeElementFromArray(Comet arr[], uint8_t index) {
+  for (uint8_t i = index; i < MAX_COMETS-1; ++i)
+    arr[i] = arr[i+1];
+}
+
+void removeElementFromArray(Explosion arr[], uint8_t index) {
+  for (uint8_t i = index; i < MAX_COMETS-1; ++i)
+    arr[i] = arr[i+1];
+}
+
+void Effects::_comets() {
+  if (millis() - effect_tick > 30) {
+    if (comets_count < MAX_COMETS) {
+      if (random(100) > 97 || comets_count == 0) {
+        // создание новой кометы
+        uint32_t color;
+        if (random(10) > 7) {
+          color = random(1, 0xFFFFFF);
+        } else {
+          color = wheel(random(256));
+        }
+
+        uint8_t min_speed = 0;
+        for (uint8_t i = 0; i < comets_count; i++) {
+          if (comets[i].speed == 0) {
+            min_speed = 1;
+          }
+        }
+
+        uint16_t pos;
+        uint16_t iterations = 0;
+        boolean clear_pos;
+        // поиск пустой области для кометы 
+        while (iterations < 1000) {
+          pos = random(LED_COUNT);
+          clear_pos = true;
+          for (int8_t d = -8; d < 9; d++) {
+            if (pos + d >= LED_COUNT)
+              continue;
+            if (comet_strip[pos+d] != 0) {
+              clear_pos = false;
+              break;
+            }
+          }
+          if (clear_pos)
+            break;
+          iterations++;
+        }
+
+        if (clear_pos) {
+          Comet comet {pos, (uint8_t)random(min_speed, COMET_MAX_SPEED), (boolean)random(2), color};
+          comets[comets_count] = comet;
+          comets_count++;
+        }
+      }
+    }
+    for (uint8_t cycle = 0; cycle < COMET_MAX_SPEED+1; cycle++) {
+      // обработка движения comet.speed раз за цикл
+      for (uint8_t i = 0; i < comets_count; i++) {
+        Comet &comet = comets[i];
+        if (cycle < comet.speed) {
+          if (random(100) > 98) {
+            // случайное изменение скорости кометы
+            uint8_t new_speed = constrain(comet.speed + random(-1, 2), 1, COMET_MAX_SPEED);
+            for (uint8_t j = 0; j < comets_count; j++) {
+              if (comets[j].speed != new_speed && i != j) {
+                comet.speed = new_speed;
+              }
+            }
+          }
+
+          // движение кометы
+          if (comet.pos == LED_COUNT - 1 && comet.direction) {
+            comet.pos = 0;
+          } else if (comet.pos == 0 && !comet.direction) {
+            comet.pos = LED_COUNT - 1;
+          } else {
+            comet.pos += comet.direction*2-1;
+          }
+          for (uint8_t j = 0; j < comets_count; j++) {
+            for (uint8_t c = 0; c < explosions_count; c++) {
+              if (comets[j].pos == explosions[c].pos && explosions[c].age > 1) {
+                // столкновение с ядром взрыва
+                removeElementFromArray(comets, j);
+                comets_count--;
+              }
+            }
+            if (comets[j].pos == comet.pos && i != j) {
+              // столкновение с кометой
+              if (explosions_count < MAX_EXPLOSIONS) {
+                Explosion explosion {comet.pos};
+                explosions[explosions_count] = explosion;
+                explosions_count++;
+                uint32_t exp_color = mixColors(comet.color, comets[j].color, 0.5);
+                if (comets[j].speed == 0 && comet.speed > 1) {
+                  exp_color = comets[j].color;
+                }
+                for (uint8_t n = 0; n < EXPLOSION_DISTANCE; n++) {
+                  uint32_t dimmed_exp_color = mixColors(exp_color, 0, (float)n/(EXPLOSION_DISTANCE+1));
+                  if (explosion.pos + n < LED_COUNT)
+                    comet_strip[explosion.pos + n] = dimmed_exp_color;
+                  if (explosion.pos - n >= 0)
+                    comet_strip[explosion.pos - n] = dimmed_exp_color;
+                }
+              }
+              if (comets[j].speed != 0 || comet.speed == 1) {
+                removeElementFromArray(comets, i);
+                comets_count--;
+              }
+              removeElementFromArray(comets, j);
+              comets_count--;
+            }
+          }
+        }
+        if (comet_strip[comet.pos] == 0) {
+          comet_strip[comet.pos] = comet.color;
+        } else {
+          comet_strip[comet.pos] = mixColors(comet.color, comet_strip[comet.pos], 0.2);
+        }
+      }
+    }
+    for (int i=0; i<LED_COUNT; i++) {
+      setPixel(i, comet_strip[i], DEFAULT_PIX);
+    }
+    for (uint8_t i = 0; i < explosions_count; i++) {
+      Explosion &explosion = explosions[i];
+      explosion.age++;
+      if (explosion.age > 15) {
+        removeElementFromArray(explosions, i);
+        explosions_count--;
+      } else {
+        comet_strip[explosion.pos] = 0xDDDDDD;
+      }
+      // свечение взрыва
+      for (uint16_t j = explosion.pos-1; j < explosion.pos+2; j++)
+        setPixel(j, 0xDDDDDD, DEFAULT_PIX);
+    }
+    strip_show();
+    for (uint16_t i = 0; i < LED_COUNT; i++) {
+      comet_strip[i] = mixColors(comet_strip[i], 0, 0.1);
+    }
+    effect_tick = millis();
+  }
+}
+
 void Effects::_show_strip(uint8_t effect_num, uint32_t effect_color) {
 
   if (!strip_state) {
@@ -214,6 +359,9 @@ void Effects::_show_strip(uint8_t effect_num, uint32_t effect_color) {
       break;
     case 5:
       _color_river();
+      break;
+    case 6:
+      _comets();
       break;
   }
   if (rainbow_mode && millis() - rainbow_color_last_tick > 20) {

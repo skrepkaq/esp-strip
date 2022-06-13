@@ -6,6 +6,7 @@
 #include <config.h>
 #include <strip.h>
 #include <color.h>
+#include <comets.h>
 
 
 #define PERLIN_MIDPOINT 150
@@ -14,6 +15,11 @@
 
 #define MIN_COLORS_DISTANCE 5
 #define MAX_MIX_DISTANCE 4
+
+#define MAX_COMETS 4
+#define MAX_EXPLOSIONS 20
+#define COMET_MAX_SPEED 4
+#define EXPLOSION_DISTANCE 4
 
 
 class Effects {
@@ -35,6 +41,7 @@ class Effects {
     void _perlin();
     void _blinding_lights();
     void _color_river();
+    void _comets();
 
     void _show_strip(uint8_t effect_num, uint32_t effect_color);
 
@@ -48,6 +55,7 @@ class Effects {
     boolean leds_b[LED_COUNT];
     uint8_t rand_dots[LED_COUNT];
     uint32_t river_colors[LED_COUNT];
+    uint32_t comet_strip[LED_COUNT];
     uint8_t strip_mode;
     uint16_t x;
     uint32_t paddleBumpColor;
@@ -56,4 +64,8 @@ class Effects {
     uint8_t rainbow_color_hue;
     boolean rainbow_mode;
     boolean strip_state = 1;
+    Comet comets[MAX_COMETS];
+    uint8_t comets_count;
+    Explosion explosions[MAX_EXPLOSIONS];
+    uint8_t explosions_count;
 };
