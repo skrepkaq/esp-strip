@@ -250,7 +250,7 @@ void Effects::_comets() {
       for (uint8_t i = 0; i < comets_count; i++) {
         Comet &comet = comets[i];
         comet.age++;
-        if (comet.age > 8*30) {
+        if (comet.age > 2400) {
           // смерть по причине дед
           removeElementFromArray(comets, i);
           comets_count--;
