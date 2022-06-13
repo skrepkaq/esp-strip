@@ -18,7 +18,7 @@ boolean Network::_wifi_connect() {
   uint32_t wifi_try = millis();
   while (WiFi.status() != WL_CONNECTED) {
     delay(10);
-    effects.show(1, makeColor(255, 0, 0));
+    effects.show(1, 0xFF0000);
     ESP.wdtFeed();
     if (millis() - wifi_try > 15000) {
       wifi_tries++;
@@ -53,7 +53,7 @@ void Network::handle_wifi() {
       uint32_t wait_for = millis() + 1000;
       while (millis() < wait_for) {
         ESP.wdtFeed();
-        effects.show(1, makeColor(255, 127, 0));
+        effects.show(1, 0xFF8000);
       }
       MDNS.begin(DNS_HOST);
 
@@ -71,8 +71,9 @@ void Network::handle_wifi() {
 void Network::handle_mqtt() {
   if (WiFi.status() != WL_CONNECTED) return;
   while (!client.connected()) {
-    effects.show(1, makeColor(255, 127, 0));
+    effects.show(1, 0xFF8000);
     ESP.wdtFeed();
+    mqtt_tries++;
     String client_id = "esp8266-client-";
     client_id += String(WiFi.macAddress());
     if (client.connect(client_id.c_str(), MQTT_USERNAME, MQTT_PASSWORD)) {
@@ -81,7 +82,7 @@ void Network::handle_mqtt() {
       uint32_t wait_for = millis() + 1000;
       while (millis() < wait_for) {
         ESP.wdtFeed();
-        effects.show(1, makeColor(0, 255, 0));
+        effects.show(1, 0x00FF00);
       }
 
       client.publish("wall/color/stat", String(effects.get_color()).c_str());
@@ -90,7 +91,16 @@ void Network::handle_mqtt() {
       client.publish("wall/brightness/stat", "8");
       client.publish("wall/mode/stat", "0");
       randomSeed(micros());
+      mqtt_tries = 0;
     } else {
+      #if WIFI_RECONECT_WHEN_MQTT_FAIL
+      if (mqtt_tries > 5) {
+        mqtt_tries = 0;
+        WiFi.disconnect();
+        delay(100);
+      }
+      #endif
+      Serial.println("MQTT FAIL!");
       delay(10);
     }
   }

@@ -8,9 +8,9 @@
 
 
 enum setPixelMode {
+    DEFAULT_PIX,
     GAP_FILL,
-    MIDDLE_OUT,
-    DEFAULT_PIX
+    MIDDLE_OUT
 };
 
 

@@ -21,6 +21,6 @@ class Network {
     boolean _wifi_connect();
     void _callback(char *topic, byte *payload, unsigned int length);
 
-    uint8_t wifi_tries;
+    uint8_t wifi_tries, mqtt_tries;
     Effects &effects;
 };

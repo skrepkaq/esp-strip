@@ -8,15 +8,15 @@ void Effects::_perlin() {
       if (rainbow_mode) {
         perl_wheel += perlin_hue_min;
         if (perl_wheel > 255) {
-          setPixel(i, mixColors(wheel(255), makeColor(255, 255, 255), (float)(perl_wheel % 255) / (100*2)));
+          setPixel(i, mixColors(wheel(255), 0xFFFFFF, (float)(perl_wheel % 255) / (100*2)));
         } else {
           setPixel(i, wheel(perl_wheel));
         }
       } else {
         if (perl_wheel < PERLIN_MIDPOINT) {
-          setPixel(i, mixColors(color, makeColor(0, 0, 0), (float)(map(perl_wheel, 0, PERLIN_MIDPOINT, 90, 0))/100));
+          setPixel(i, mixColors(color, 0x0, (float)(map(perl_wheel, 0, PERLIN_MIDPOINT, 90, 0))/100));
         } else {
-          setPixel(i, mixColors(color, makeColor(255, 255, 255), (float)(map(perl_wheel, PERLIN_MIDPOINT, 255, 0, 40))/100));
+          setPixel(i, mixColors(color, 0xFFFFFF, (float)(map(perl_wheel, PERLIN_MIDPOINT, 255, 0, 40))/100));
         }
       }
     }
@@ -99,7 +99,7 @@ void Effects::_blinding_lights() {
         }
       }
       if (dot == 255) {
-        setPixel(i, makeColor(255, 255, 255));
+        setPixel(i, 0xFFFFFF);
       } else if (dot == 0) {
         setPixel(i, 0);
       } else if (rainbow_mode) {
