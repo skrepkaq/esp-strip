@@ -249,6 +249,12 @@ void Effects::_comets() {
       // обработка движения comet.speed раз за цикл
       for (uint8_t i = 0; i < comets_count; i++) {
         Comet &comet = comets[i];
+        comet.age++;
+        if (comet.age > 8*30) {
+          // смерть по причине дед
+          removeElementFromArray(comets, i);
+          comets_count--;
+        }
         if (cycle < comet.speed) {
           if (random(100) > 98) {
             // случайное изменение скорости кометы

@@ -7,6 +7,7 @@ struct Comet {
     uint8_t speed;
     boolean direction;
     uint32_t color;
+    uint16_t age;
 };
 
 struct Explosion
